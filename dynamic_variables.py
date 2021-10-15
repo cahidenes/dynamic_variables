@@ -45,33 +45,37 @@ class VariableTweaker:
         self.window = tk.Tk()
         variables = []
         for request_name, parameters in self.create_requests:
+            frame = tk.Frame(self.window)
+            label = tk.Label(frame, text=parameters[0] + ': ')
+            label.pack(side='left', fill='x')
             if request_name == 'slider':
                 name, value, min_value, max_value, step = parameters
-                scl = tk.Scale(self.window, from_=min_value, to=max_value, resolution=step,
+                scl = tk.Scale(frame, from_=min_value, to=max_value, resolution=step,
                                orient=tk.HORIZONTAL, command=get_setter(self, name))
                 scl.set(value)
-                scl.pack()
+                scl.pack(expand=True, fill='x')
                 variables.append((request_name, name, scl))
             elif request_name == 'text':
                 name, value = parameters
-                entry = tk.Entry(self.window)
+                entry = tk.Entry(frame)
                 entry.configure(validate='key', validatecommand=get_text_callback(self, name, entry))
                 entry.insert(0, value)
-                entry.pack()
+                entry.pack(expand=True, fill='x')
                 variables.append((request_name, name, entry))
             elif request_name == 'dropdown':
                 name, value, options = parameters
                 variable = tk.Variable(value=value, name=name)
-                optionmenu = tk.OptionMenu(self.window, variable, *options, command=get_setter(self, name))
-                optionmenu.pack()
+                optionmenu = tk.OptionMenu(frame, variable, *options, command=get_setter(self, name))
+                optionmenu.pack(expand=True, fill='x')
                 variables.append((request_name, name, optionmenu))
             elif request_name == 'boolean':
                 name, value = parameters
                 var = tk.BooleanVar(value=value)
-                checkbutton = tk.Checkbutton(self.window, text=name, variable=var)
+                checkbutton = tk.Checkbutton(frame, text=name, variable=var)
                 checkbutton.configure(command=get_boolean_callback(self, name, var))
-                checkbutton.pack()
+                checkbutton.pack(expand=True, fill='both')
                 variables.append((request_name, name, checkbutton))
+            frame.pack(expand=True, fill='x')
 
         def constant_checker():
             for request_name, variable_name, widget in variables:
