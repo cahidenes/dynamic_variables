@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.font as tkfont
+from tkinter import ttk
 import threading
 
 
@@ -16,9 +17,10 @@ def get_text_callback(obj, name, entry):
     return callback
 
 
-def get_boolean_callback(obj, name, var):
+def get_boolean_callback(obj, name, var, radiobutton):
     def callback():
         setattr(obj, name, var.get())
+        radiobutton.config(text=('True' if var.get() else 'False'))
     return callback
 
 
@@ -39,20 +41,19 @@ class VariableTweaker:
     def add_boolean(self, name, value):
         self.create_requests.append(('boolean', (name, value)))
 
-    def init_gui_thread(self, window_name='Variable Tweaker', label_font_size=15, widget_font_size=10):
+    def init_gui_thread(self, window_name='Variable Tweaker', label_font_size=16, widget_font_size=12):
         for request_name, parameters in self.create_requests:
             setattr(self, parameters[0], parameters[1])
 
         self.window = tk.Tk()
         self.window.title(window_name)
-        label_font = tkfont.Font(family='Helvetica', size=label_font_size)
+        label_font = tkfont.Font(family='Helvetica', size=label_font_size, weight='bold')
         widget_font = tkfont.Font(family='Helvetica', size=widget_font_size)
-        option_dropdown_font = tkfont.Font(family='Helvetica', size=int(widget_font_size*0.8))
         variables = []
         for request_name, parameters in self.create_requests:
-            frame = tk.Frame(self.window)
+            frame = tk.Frame(self.window, bd=4, relief=tk.FLAT)
             label = tk.Label(frame, text=parameters[0] + ': ', font=label_font)
-            label.pack(side='left', fill='x')
+            label.pack(side='left', fill='x', padx=5, pady=5)
             if request_name == 'slider':
                 name, value, min_value, max_value, step = parameters
                 scl = tk.Scale(frame, from_=min_value, to=max_value, resolution=step, font=widget_font,
@@ -62,7 +63,7 @@ class VariableTweaker:
                 variables.append((request_name, name, scl))
             elif request_name == 'text':
                 name, value = parameters
-                entry = tk.Entry(frame, font=widget_font)
+                entry = tk.Entry(frame, font=widget_font, justify='center')
                 entry.configure(validate='key', validatecommand=get_text_callback(self, name, entry))
                 entry.insert(0, value)
                 entry.pack(expand=True, fill='x')
@@ -72,17 +73,19 @@ class VariableTweaker:
                 variable = tk.Variable(value=value, name=name)
                 optionmenu = tk.OptionMenu(frame, variable, *options, command=get_setter(self, name))
                 optionmenu.config(font=widget_font)
-                frame.nametowidget(optionmenu.menuname).config(font=option_dropdown_font)
+                frame.nametowidget(optionmenu.menuname).config(font=widget_font)
                 optionmenu.pack(expand=True, fill='x')
                 variables.append((request_name, name, optionmenu))
             elif request_name == 'boolean':
                 name, value = parameters
                 var = tk.BooleanVar(value=value)
-                checkbutton = tk.Checkbutton(frame, text=name, variable=var, font=widget_font)
-                checkbutton.configure(command=get_boolean_callback(self, name, var))
+                checkbutton = tk.Checkbutton(frame, text=('True' if value else 'False'),
+                                             variable=var, font=widget_font, indicatoron=False)
+                checkbutton.configure(command=get_boolean_callback(self, name, var, checkbutton))
                 checkbutton.pack(expand=True, fill='both')
                 variables.append((request_name, name, checkbutton))
-            frame.pack(expand=True, fill='x')
+            frame.pack(expand=True, fill='x', padx=3, pady=3)
+            ttk.Separator(self.window, orient='horizontal').pack(fill='x')
 
         def constant_checker():
             for request_name, variable_name, widget in variables:
