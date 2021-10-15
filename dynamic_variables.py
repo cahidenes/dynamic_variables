@@ -1,45 +1,46 @@
 import tkinter as tk
 import threading
 
-create_requests = []
 
-
-def get_setter(name):
+def get_setter(obj, name):
     def setter(scale_value):
-        globals()[name] = scale_value
+        setattr(obj, name, scale_value)
     return setter
 
 
-def create_slider(name, value, min_value, max_value, step):
-    create_requests.append(('slider', (name, value, min_value, max_value, step)))
+class VariableTweaker:
+    def __init__(self):
+        self.create_requests = []
+        self.window = None
 
+    def add_slider(self, name, value, min_value, max_value, step):
+        self.create_requests.append(('slider', (name, value, min_value, max_value, step)))
 
-def init_gui_thread():
+    def init_gui_thread(self):
+        for request_name, parameters in self.create_requests:
+            setattr(self, parameters[0], parameters[1])
 
-    for request_name, parameters in create_requests:
-        globals()[parameters[0]] = parameters[1]
+        self.window = tk.Tk()
+        variables = []
+        for request_name, parameters in self.create_requests:
+            if request_name == 'slider':
+                name, value, min_value, max_value, step = parameters
+                scl = tk.Scale(self.window, from_=min_value, to=max_value, resolution=step,
+                               orient=tk.HORIZONTAL, command=get_setter(self, name))
+                scl.set(value)
+                scl.pack()
+                variables.append((name, scl))
 
-    window = tk.Tk()
-    variables = []
-    for request_name, parameters in create_requests:
-        if request_name == 'slider':
-            name, value, min_value, max_value, step = parameters
-            globals()[name] = value
-            scl = tk.Scale(from_=min_value, to=max_value, resolution=step, orient=tk.HORIZONTAL, command=get_setter(name))
-            scl.set(value)
-            scl.pack()
-            variables.append((name, value, scl))
+        def constant_checker():
+            for i, (variable_name, scale) in enumerate(variables):
+                new_value = getattr(self, variable_name)
+                if new_value != scale.get():
+                    variables[i] = (variable_name, scale)
+                    scale.set(new_value)
+            self.window.after(100, constant_checker)
 
-    def constant_checker():
-        for i, (name, last, scale) in enumerate(variables):
-            if globals()[name] != last:
-                variables[i] = (name, globals()[name], scale)
-                scale.set(globals()[name])
-        window.after(1000, constant_checker)
+        self.window.after(100, constant_checker)
+        self.window.mainloop()
 
-    window.after(1000, constant_checker)
-    window.mainloop()
-
-
-def init_gui():
-    threading.Thread(target=init_gui_thread).start()
+    def init_gui(self):
+        threading.Thread(target=self.init_gui_thread, daemon=True).start()
