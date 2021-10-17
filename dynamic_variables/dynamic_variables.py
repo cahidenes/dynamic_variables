@@ -6,15 +6,20 @@ import threading
 import re
 
 
-def get_setter(obj, name):
-    def setter(scale_value):
+def get_slider_callback(obj, name):
+    def slider_callback(scale_value):
         if '.' in scale_value:
             scale_value = float(scale_value)
         else:
             scale_value = int(scale_value)
-        print(type(scale_value))
         setattr(obj, name, scale_value)
-    return setter
+    return slider_callback
+
+
+def get_option_callback(obj, name):
+    def option_callback(value):
+        setattr(obj, name, value)
+    return option_callback
 
 
 def get_text_callback(obj, name, entry):
@@ -125,7 +130,7 @@ class VariableTweaker:
             if request_name == 'slider':
                 name, value, min_value, max_value, step = parameters
                 scl = tk.Scale(frame, from_=min_value, to=max_value, resolution=step, font=widget_font,
-                               orient=tk.HORIZONTAL, command=get_setter(self, name))
+                               orient=tk.HORIZONTAL, command=get_slider_callback(self, name))
                 scl.set(value)
                 scl.pack(expand=True, fill='x')
                 variables.append((request_name, name, scl))
@@ -139,7 +144,7 @@ class VariableTweaker:
             elif request_name == 'dropdown':
                 name, value, options = parameters
                 variable = tk.Variable(value=value, name=name)
-                option_menu = tk.OptionMenu(frame, variable, *options, command=get_setter(self, name))
+                option_menu = tk.OptionMenu(frame, variable, *options, command=get_option_callback(self, name))
                 option_menu.config(font=widget_font)
                 frame.nametowidget(option_menu.menuname).config(font=widget_font)
                 option_menu.pack(expand=True, fill='x')
