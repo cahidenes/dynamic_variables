@@ -3,6 +3,7 @@ import tkinter.font as tk_font
 from tkinter import ttk
 from tkinter import colorchooser
 import threading
+import re
 
 
 class VariableTweaker:
@@ -11,21 +12,64 @@ class VariableTweaker:
         self.window = None
 
     def add_slider(self, name, value, min_value, max_value, step):
+        type_error = 'must be int or float, not'
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if not isinstance(value, int) and not isinstance(value, float):
+            raise TypeError(f'value {type_error} {value.__class__.__name__}')
+        if not isinstance(min_value, int) and not isinstance(min_value, float):
+            raise TypeError(f'min_value {type_error} {min_value.__class__.__name__}')
+        if not isinstance(max_value, int) and not isinstance(max_value, float):
+            raise TypeError(f'max_value {type_error} {max_value.__class__.__name__}')
+        if not isinstance(step, int) and not isinstance(step, float):
+            raise TypeError(f'step {type_error} {step.__class__.__name__}')
+        if min_value >= max_value:
+            raise ValueError(f'min_value is not less than max_value: {min_value} < {max_value} not holds')
+        if not (min_value <= value <= max_value):
+            raise ValueError(
+                f'value must be between min and max values: {min_value} <= {value} <= {max_value} not holds')
+
         self.create_requests.append(('slider', (name, value, min_value, max_value, step)))
 
     def add_text(self, name, value):
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if not isinstance(value, str):
+            raise TypeError(f'value must be str, not {value.__class__.__name__}')
         self.create_requests.append(('text', (name, value)))
 
     def add_dropdown(self, name, value, options):
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if not isinstance(options, list) and not isinstance(options, tuple):
+            raise TypeError(f'options must be list or tuple, not {options.__class__.__name__}')
         self.create_requests.append(('dropdown', (name, value, options)))
 
     def add_boolean(self, name, value):
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if not isinstance(value, bool):
+            raise TypeError(f'value must be bool, not {name.__class__.__name__}')
         self.create_requests.append(('boolean', (name, value)))
 
     def add_color(self, name, value):
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if isinstance(value, str):
+            if not re.match('#[1234567890abcdefABCDEF]{6}', value):
+                raise ValueError('value must be in #XXXXXX format')
+        else:
+            try:
+                r, g, b = value
+                if not isinstance(r, int) or not isinstance(g, int) or not isinstance(b, int):
+                    raise TypeError('r, g and b must be integers')
+                if not (0 <= r <= 255, 0 <= g <= 255, 0 <= b <= 255):
+                    raise ValueError('r, g, and b must be in range of [0, 255]')
+            except ValueError:
+                raise ValueError('value must be (r, g, b) or #XXXXXX color format')
         self.create_requests.append(('color', (name, value)))
 
-    def __init_gui_thread__(self, window_name='Variable Tweaker', font_size=16, widget_font_size=None):
+    def __init_gui_thread__(self, window_name, font_size, widget_font_size):
 
         if widget_font_size is None:
             widget_font_size = int(font_size * 0.75)
@@ -55,6 +99,7 @@ class VariableTweaker:
 
                 def callback():
                     self.window.after(10, lambda: setattr(self, name, entry.get()))
+
                     return True
 
                 entry.configure(validate='key', validatecommand=callback)
@@ -86,8 +131,6 @@ class VariableTweaker:
             elif request_name == 'color':
                 name, value = parameters
                 color = Color(value)
-                print(color.color_code, color.r, color.b, color.g)
-
                 def color_callback():
                     color.set(colorchooser.askcolor(color=color.color_code, title='Choose Color')[0])
                     button.config(bg=color.color_code, activebackground=color.__highlight_color__())
@@ -101,8 +144,9 @@ class VariableTweaker:
 
         self.window.mainloop()
 
-    def init_gui(self):
-        threading.Thread(target=self.__init_gui_thread__, daemon=True).start()
+    def init_gui(self, window_name='Variable Tweaker', font_size=16, widget_font_size=None):
+        threading.Thread(target=self.__init_gui_thread__, daemon=True,
+                         args=(window_name, font_size, widget_font_size)).start()
 
 
 class Color:
@@ -121,8 +165,6 @@ class Color:
         elif isinstance(value, tuple):
             self.r, self.g, self.b = value
             self.color_code = '#{:06x}'.format((self.r << 16) | (self.g << 8) | self.b)
-        else:
-            print(type(value))
 
     def __highlight_color__(self):
         return '#{:06x}'.format((min(self.r + 20, 255) << 16) | ((min(self.g + 20, 255) << 8) | min(self.b + 20, 255)))
