@@ -104,26 +104,11 @@ class VariableTweaker:
             frame.pack(expand=True, fill='x', padx=3, pady=3)
             ttk.Separator(self.window, orient='horizontal').pack(fill='x')
 
-        def constant_checker():
-            for request_name, variable_name, widget in variables:
-                new_value = getattr(self, variable_name)
-                if request_name == 'slider':
-                    if new_value != widget.get():
-                        widget.set(new_value)
-                # elif request_name == 'text':
-                #     if new_value != widget.get():
-                #         widget.delete(0, len(widget.get()))
-                #         widget.insert(0, new_value)
-                # elif request_name == 'dropdown':
-                #     if new_value != widget.get():
-                #         widget.set(new_value)
-                # elif request_name == 'boolean':
-                #     if new_value != widget.get():
-                #         widget.set(new_value)
+        # def constant_checker():
+        #     self.window.after(100, constant_checker)
+        #
+        # self.window.after(100, constant_checker)
 
-            self.window.after(100, constant_checker)
-
-        self.window.after(100, constant_checker)
         self.window.mainloop()
 
     def init_gui(self):
