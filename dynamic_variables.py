@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
+from tkinter import colorchooser
 import threading
 
 
@@ -40,6 +41,9 @@ class VariableTweaker:
 
     def add_boolean(self, name, value):
         self.create_requests.append(('boolean', (name, value)))
+
+    def add_color(self, name, value):
+        self.create_requests.append(('color', (name, value)))
 
     def init_gui_thread(self, window_name='Variable Tweaker', label_font_size=16, widget_font_size=12):
         for request_name, parameters in self.create_requests:
@@ -84,6 +88,19 @@ class VariableTweaker:
                 checkbutton.configure(command=get_boolean_callback(self, name, var, checkbutton))
                 checkbutton.pack(expand=True, fill='both')
                 variables.append((request_name, name, checkbutton))
+            elif request_name == 'color':
+                name, value = parameters
+                color = Color(value)
+                print(color.colorcode, color.r, color.b, color.g)
+
+                def color_callback():
+                    color.set(colorchooser.askcolor(color=color.colorcode, title='Choose Color')[0])
+                    button.config(bg=color.colorcode, activebackground=color.__highlight_color__())
+
+                button = tk.Button(frame, bg=color.colorcode, activebackground=color.__highlight_color__(),
+                                   command=color_callback)
+                button.pack(expand=True, fill='both')
+
             frame.pack(expand=True, fill='x', padx=3, pady=3)
             ttk.Separator(self.window, orient='horizontal').pack(fill='x')
 
@@ -111,3 +128,26 @@ class VariableTweaker:
 
     def init_gui(self):
         threading.Thread(target=self.init_gui_thread, daemon=True).start()
+
+
+class Color:
+    def __init__(self, value):
+        self.r, self.g, self.b, self.colorcode = 0, 0, 0, '#000000'
+        self.set(value)
+
+    def set(self, value=(0, 0, 0)):
+        if isinstance(value, str):
+            value = value.replace('#', '')
+            a = int(value, 16)
+            self.b = a & 0xff
+            self.g = (a >> 8) & 0xff
+            self.r = (a >> 16) & 0xff
+            self.colorcode = '#' + value
+        elif isinstance(value, tuple):
+            self.r, self.g, self.b = value
+            self.colorcode = '#{:06x}'.format((self.r << 16) | (self.g << 8) | self.b)
+        else:
+            print(type(value))
+
+    def __highlight_color__(self):
+        return '#{:06x}'.format((min(self.r + 20, 255) << 16) | ((min(self.g + 20, 255) << 8) | min(self.b + 20, 255)))

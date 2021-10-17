@@ -6,6 +6,7 @@ gui1.add_slider('slidervar', 5, 0, 10, 0.1)
 gui1.add_text('textvar', 'asdf')
 gui1.add_dropdown('dropdownvar', 1, [1, 'abc', True, False])
 gui1.add_boolean('booleanvar', True)
+gui1.add_color('colorvar', (12, 63, 85))
 
 gui1.init_gui()
 
