@@ -8,6 +8,11 @@ import re
 
 def get_setter(obj, name):
     def setter(scale_value):
+        if '.' in scale_value:
+            scale_value = float(scale_value)
+        else:
+            scale_value = int(scale_value)
+        print(type(scale_value))
         setattr(obj, name, scale_value)
     return setter
 
