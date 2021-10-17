@@ -6,6 +6,34 @@ import threading
 import re
 
 
+def get_setter(obj, name):
+    def setter(scale_value):
+        setattr(obj, name, scale_value)
+    return setter
+
+
+def get_text_callback(obj, name, entry):
+    def callback():
+        obj.window.after(10, lambda: setattr(obj, name, entry.get()))
+        return True
+    return callback
+
+
+def get_boolean_callback(obj, name, var, radiobutton):
+    def callback():
+        setattr(obj, name, var.get())
+        radiobutton.config(text=('True' if var.get() else 'False'))
+    return callback
+
+
+def get_color_callback(obj, name, color, button):
+    def color_callback():
+        color.set(colorchooser.askcolor(color=color.color_code, title='Choose Color')[0])
+        setattr(obj, name, color)
+        button.config(bg=color.color_code, activebackground=color.__highlight_color__())
+    return color_callback
+
+
 class VariableTweaker:
     def __init__(self):
         self.create_requests = []
@@ -75,7 +103,10 @@ class VariableTweaker:
             widget_font_size = int(font_size * 0.75)
 
         for request_name, parameters in self.create_requests:
-            setattr(self, parameters[0], parameters[1])
+            if isinstance(parameters[1], tuple):
+                setattr(self, parameters[0], Color(parameters[1]))
+            else:
+                setattr(self, parameters[0], parameters[1])
 
         self.window = tk.Tk()
         self.window.title(window_name)
@@ -89,28 +120,21 @@ class VariableTweaker:
             if request_name == 'slider':
                 name, value, min_value, max_value, step = parameters
                 scl = tk.Scale(frame, from_=min_value, to=max_value, resolution=step, font=widget_font,
-                               orient=tk.HORIZONTAL, command=lambda scale_value: setattr(self, name, scale_value))
+                               orient=tk.HORIZONTAL, command=get_setter(self, name))
                 scl.set(value)
                 scl.pack(expand=True, fill='x')
                 variables.append((request_name, name, scl))
             elif request_name == 'text':
                 name, value = parameters
                 entry = tk.Entry(frame, font=widget_font, justify='center')
-
-                def callback():
-                    self.window.after(10, lambda: setattr(self, name, entry.get()))
-
-                    return True
-
-                entry.configure(validate='key', validatecommand=callback)
+                entry.configure(validate='key', validatecommand=get_text_callback(self, name, entry))
                 entry.insert(0, value)
                 entry.pack(expand=True, fill='x')
                 variables.append((request_name, name, entry))
             elif request_name == 'dropdown':
                 name, value, options = parameters
                 variable = tk.Variable(value=value, name=name)
-                option_menu = tk.OptionMenu(frame, variable, *options,
-                                            command=lambda scale_value: setattr(self, name, scale_value))
+                option_menu = tk.OptionMenu(frame, variable, *options, command=get_setter(self, name))
                 option_menu.config(font=widget_font)
                 frame.nametowidget(option_menu.menuname).config(font=widget_font)
                 option_menu.pack(expand=True, fill='x')
@@ -120,23 +144,14 @@ class VariableTweaker:
                 var = tk.BooleanVar(value=value)
                 checkbutton = tk.Checkbutton(frame, text=('True' if value else 'False'),
                                              variable=var, font=widget_font, indicatoron=False)
-
-                def callback():
-                    setattr(self, name, var.get())
-                    checkbutton.config(text=('True' if var.get() else 'False'))
-
-                checkbutton.configure(command=callback)
+                checkbutton.configure(command=get_boolean_callback(self, name, var, checkbutton))
                 checkbutton.pack(expand=True, fill='both')
                 variables.append((request_name, name, checkbutton))
             elif request_name == 'color':
                 name, value = parameters
                 color = Color(value)
-                def color_callback():
-                    color.set(colorchooser.askcolor(color=color.color_code, title='Choose Color')[0])
-                    button.config(bg=color.color_code, activebackground=color.__highlight_color__())
-
-                button = tk.Button(frame, bg=color.color_code, activebackground=color.__highlight_color__(),
-                                   command=color_callback)
+                button = tk.Button(frame, bg=color.color_code, activebackground=color.__highlight_color__())
+                button.config(command=get_color_callback(self, name, color, button))
                 button.pack(expand=True, fill='both')
 
             frame.pack(expand=True, fill='x', padx=3, pady=3)
@@ -153,6 +168,9 @@ class Color:
     def __init__(self, value):
         self.r, self.g, self.b, self.color_code = 0, 0, 0, '#000000'
         self.set(value)
+
+    def __str__(self):
+        return f'({self.r}, {self.g}, {self.b})'
 
     def set(self, value=(0, 0, 0)):
         if isinstance(value, str):
