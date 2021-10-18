@@ -45,9 +45,10 @@ def get_color_callback(obj, name, color, button):
 
 
 class VariableTweaker:
-    def __init__(self):
+    def __init__(self, window_name='Variable Tweaker'):
         self.create_requests = []
         self.window = None
+        self.window_name = window_name
 
     def add_slider(self, name, value, min_value, max_value, step):
         type_error = 'must be int or float, not'
@@ -107,7 +108,7 @@ class VariableTweaker:
                 raise ValueError('value must be (r, g, b) or #XXXXXX color format')
         self.create_requests.append(('color', (name, value)))
 
-    def __init_gui_thread__(self, window_name, font_size, widget_font_size):
+    def __init_gui_thread__(self, font_size, widget_font_size):
 
         if widget_font_size is None:
             widget_font_size = int(font_size * 0.75)
@@ -119,7 +120,7 @@ class VariableTweaker:
                 setattr(self, parameters[0], parameters[1])
 
         self.window = tk.Tk()
-        self.window.title(window_name)
+        self.window.title(self.window_name)
         label_font = tk_font.Font(family='Helvetica', size=font_size, weight='bold')
         widget_font = tk_font.Font(family='Helvetica', size=widget_font_size)
         variables = []
@@ -169,9 +170,9 @@ class VariableTweaker:
 
         self.window.mainloop()
 
-    def init_gui(self, window_name='Variable Tweaker', font_size=16, widget_font_size=None):
+    def init_gui(self, font_size=16, widget_font_size=None):
         threading.Thread(target=self.__init_gui_thread__, daemon=True,
-                         args=(window_name, font_size, widget_font_size)).start()
+                         args=(font_size, widget_font_size)).start()
 
 
 class Color:
