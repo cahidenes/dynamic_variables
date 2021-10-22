@@ -1,7 +1,9 @@
 # Dynamic Variables
 Change variables during runtime using simple GUI.
 ## Installation
-    pip install dynamic_variables
+```
+pip install dynamic_variables
+```
 ## Usage
 Here is a minimalist example
 
@@ -90,6 +92,22 @@ When accessing the color variable, `r`, `g`, `b` and `color_code` parts are avai
 ```python
 print(vt.color.r, vt.color.color_code)
 ```
+
+#### Button
+Button widget allows you to invoke functions manually.
+
+```python
+add_button(button_name, function_to_invoke)
+```
+
+Example:
+```python
+def print_hello():
+    print('Hello!')
+
+vt.add_button('Print Hello', print_hello)
+```
+
 ## Example Application
 ```python
 import cv2 as cv

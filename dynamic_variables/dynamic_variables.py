@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkinter import colorchooser
 import threading
 import re
+import inspect
 
 
 def get_slider_callback(obj, name):
@@ -108,14 +109,29 @@ class VariableTweaker:
                 raise ValueError('value must be (r, g, b) or #XXXXXX color format')
         self.create_requests.append(('color', (name, value)))
 
+    def add_button(self, name, function):
+        if not isinstance(name, str):
+            raise TypeError(f'name must be str, not {name.__class__.__name__}')
+        if not inspect.isfunction(function):
+            raise TypeError(f'function must be function, not {name.__class__.__name__}')
+        params = inspect.signature(function).parameters
+        for param in params:
+            if params[param].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD and \
+                    params[param].default == inspect.Parameter.empty:
+                raise ValueError(f'function "{function.__name__}" must not have any positional '
+                                 f'argument without a default value, but there is "{param}"')
+        self.create_requests.append(('button', (name, function)))
+
     def __init_gui_thread__(self, font_size, widget_font_size):
 
         if widget_font_size is None:
             widget_font_size = int(font_size * 0.75)
 
         for request_name, parameters in self.create_requests:
-            if isinstance(parameters[1], tuple):
+            if request_name == 'color':
                 setattr(self, parameters[0], Color(parameters[1]))
+            elif request_name == 'button':
+                pass
             else:
                 setattr(self, parameters[0], parameters[1])
 
@@ -126,8 +142,9 @@ class VariableTweaker:
         variables = []
         for request_name, parameters in self.create_requests:
             frame = tk.Frame(self.window, bd=4, relief=tk.FLAT)
-            label = tk.Label(frame, text=parameters[0] + ': ', font=label_font)
-            label.pack(side='left', fill='x', padx=5, pady=5)
+            if request_name != 'button':
+                label = tk.Label(frame, text=parameters[0] + ': ', font=label_font)
+                label.pack(side='left', fill='x', padx=5, pady=5)
             if request_name == 'slider':
                 name, value, min_value, max_value, step = parameters
                 scl = tk.Scale(frame, from_=min_value, to=max_value, resolution=step, font=widget_font,
@@ -163,6 +180,10 @@ class VariableTweaker:
                 color = Color(value)
                 button = tk.Button(frame, bg=color.color_code, activebackground=color.__highlight_color__())
                 button.config(command=get_color_callback(self, name, color, button))
+                button.pack(expand=True, fill='both')
+            elif request_name == 'button':
+                name, function = parameters
+                button = tk.Button(frame, command=function, text=name, font=widget_font)
                 button.pack(expand=True, fill='both')
 
             frame.pack(expand=True, fill='x', padx=3, pady=3)
