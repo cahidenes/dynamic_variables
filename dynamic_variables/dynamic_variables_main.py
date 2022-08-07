@@ -120,7 +120,6 @@ def add_slider(name, min_value, max_value, value=None, step=None):
         n = int(f'{step:e}'.split('-')[1])
     except Exception as e:
         n = 0
-    print('step: ', step, ' n: ', n)
     create_requests.append(('slider', (name, value, min_value, max_value, step, tip, n)))
 
 
@@ -179,7 +178,6 @@ def add_boolean(name, value=None):
 def add_color(name, value=None):
     if value is None:
         try:
-            print('evaluating: ', defaults[name])
             value = literal_eval(defaults[name])
         except Exception as e:
             value = (0, 0, 0)
@@ -225,7 +223,6 @@ def __init_imported_modules():
         for module in modules:
             for module_attribute in dir(module):
                 if getattr(module, module_attribute) is this_module:
-                    # print(f'found module: {module.__name__}')
                     imported_modules.append(module)
 
 
@@ -362,7 +359,6 @@ def init_gui(window_title='Variable Tweaker', font_size=None, widget_font_size=N
         try:
             color = default_args['color']
         except Exception as e:
-            print(e)
             color = 'dark-blue'
 
     if theme not in ['dark', 'light', 'native']:
