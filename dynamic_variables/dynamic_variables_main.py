@@ -244,7 +244,7 @@ def __init_gui_thread__(window_title, font_size, widget_font_size, default_width
         window = tk.Tk()
     else:
         window = ctk.CTk()
-        window.title(window_title)
+    window.title(window_title)
     label_font = tk_font.Font(family='Roboto', size=font_size, weight='bold')
     widget_font = tk_font.Font(family='Roboto', size=widget_font_size)
     variables = []
