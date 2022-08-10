@@ -190,4 +190,4 @@ while cv.waitKey(20) != ord('q'):
     cv.imshow('Image', copy)
 ```
 
-![Slider Window](https://github.com/cahidenes/visuals/blob/main/dynamic_variables2.0.gif?raw=true)
+https://user-images.githubusercontent.com/25232403/183993740-3d185f61-51dc-4e81-8c12-1d0e8b93c653.mp4
